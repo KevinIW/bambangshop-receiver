@@ -86,4 +86,47 @@ This is the place for you to write reflections:
 
 #### Reflection Subscriber-1
 
+1. In this tutorial, we used RwLock<> to synchronise the use of Vec of Notifications. Explain why it is necessary for this case, and explain why we don’t use Mutex<> instead?
+
+Dalam tutorial ini, RwLock<> digunakan untuk menyinkronkan penggunaan Vec of Notifications karena menyediakan mekanisme untuk beberapa pembaca atau satu penulis pada suatu waktu. Hal ini diperlukan karena beberapa komponen (misalnya, publishers, subscribers) dapat mengakses Vec of Notifications secara bersamaan untuk tujuan membaca, seperti mengulangi daftar untuk mengirimkan pemberitahuan atau memeriksa pemberitahuan yang tertunda. RwLock memungkinkan beberapa pembaca untuk mengakses data secara bersamaan tanpa saling menghalangi, yang meningkatkan konkurensi dan kinerja dalam skenario di mana operasi pembacaan sering terjadi.
+
+Alasan mengapa Mutex<> tidak digunakan sebagai pengganti RwLock<> adalah karena Mutex menerapkan akses eksklusif ke data, artinya hanya satu thread yang dapat memperoleh kunci pada satu waktu, baik itu untuk membaca atau menulis. Dalam konteks tutorial ini, di mana bisa terjadi banyak operasi pembacaan secara konkuren (misalnya, memeriksa pemberitahuan yang tertunda), penggunaan Mutex akan memperkenalkan persaingan yang tidak perlu dan berpotensi menurunkan kinerja. RwLock<> menyediakan solusi yang lebih sesuai dengan memungkinkan beberapa pembaca untuk mengakses data secara konkuren sambil tetap memastikan akses eksklusif untuk operasi penulisan, sehingga lebih sesuai dengan persyaratan aplikasi.
+
+2. In this tutorial, we used lazy_static external library to define Vec and DashMap as a “static” variable. Compared to Java where we can mutate the content of a static variable via a static function, why didn't Rust allow us to do so?
+
+Dalam tutorial ini, kita menggunakan library eksternal lazy_static untuk mendefinisikan Vec dan DashMap sebagai variabel "static". Berbeda dengan Java, di mana kita dapat memutasi isi dari variabel static melalui sebuah fungsi static, Rust tidak mengizinkan kita melakukannya secara langsung.
+
+Alasannya adalah karena sistem kepemilikan dan peminjaman Rust, yang memastikan keamanan memori dan mencegah balapan data dengan menerapkan aturan ketat seputar aliasing yang dapat dimutasi. Di Rust, variabel static umumnya bersifat tidak dapat diubah (immutable), dan mengizinkan akses yang dapat dimutasi kepadanya dapat berpotensi menyebabkan balapan data atau perilaku yang tidak aman lainnya.
+
+Sebagai gantinya, Rust mendorong penggunaan primitif konkurensi seperti mutex atau RwLock untuk mengakses dan memutasi data bersama dengan aman. Dengan menggunakan mekanisme sinkronisasi seperti lazy_static dalam kombinasi dengan mutex atau RwLock, Rust memastikan bahwa data bersama dapat diakses dan dimutasi secara aman dalam lingkungan konkuren sambil tetap mematuhi jaminan keamanannya. Pendekatan ini membantu mencegah bug konkurensi umum dan memastikan keandalan dan kebenaran program Rust, bahkan dalam skenario multi-threaded.
 #### Reflection Subscriber-2
+1. Have you explored things outside of the steps in the tutorial, for example: src/lib.rs? If not, explain why you didn’t do so. If yes, explain things that you’ve learned from those other parts of code.
+
+Dalam proyek-proyek Rust, lib.rs berfungsi sebagai titik masuk untuk pustaka-pustaka. Ini adalah file sumber utama di mana Anda mendefinisikan modul-modul, tipe data, fungsi, dan item-item lain yang dimaksudkan untuk digunakan oleh bagian lain dari kode atau oleh proyek-proyek eksternal.
+
+Ketika membuat proyek pustaka Rust baru menggunakan Cargo, lib.rs secara otomatis dibuat di dalam direktori src. File ini bertindak sebagai akar dari kumpulan pustaka dan memberikan lokasi pusat untuk mengatur dan membangun struktur kode.
+
+Di dalam lib.rs, biasanya didefinisikan API publik dari pustaka dengan mendeklarasikan modul-modul dan item-item menggunakan kata kunci pub. Item-item publik ini dapat diakses oleh pengguna pustaka, memungkinkan mereka untuk menggunakan dan berinteraksi dengan fungsionalitas yang disediakan.
+
+Selain itu, lib.rs juga dapat berisi modul-modul dan item-item pribadi yang tidak terpapar kepada pengguna eksternal dari pustaka. Item-item pribadi ini dapat digunakan secara internal untuk detail implementasi atau tujuan organisasi, memastikan bahwa hanya bagian-bagian yang dimaksud dari pustaka yang terlihat oleh kode eksternal.
+
+Secara keseluruhan, lib.rs memainkan peran penting dalam proyek-proyek pustaka Rust dengan mendefinisikan antarmuka publik dari pustaka dan berfungsi sebagai titik masuk utama untuk menggunakan dan berinteraksi dengan fungsionalitasnya.
+
+2. Since you have completed the tutorial by now and have tried to test your notification system by spawning multiple instances of Receiver, explain how Observer pattern eases you to plug in more subscribers. How about spawning more than 1 instance of Main app, will it still be easy enough to add to the system?
+
+Observer pattern memberikan cara yang fleksibel dan terpisah untuk menangani komunikasi antara komponen-komponen dalam sebuah sistem. Dengan menerapkan pola ini, menambahkan lebih banyak subscriber menjadi lebih mudah karena setiap subscriber dapat mendaftar secara independen dengan penerbit untuk menerima pembaruan. Decoupling ini memungkinkan penambahan subscriber baru ke dalam sistem tanpa memodifikasi kode yang sudah ada atau memengaruhi subscriber lainnya.
+
+Ketika melakukan multiple instansiasi dari aplikasi utama, menambahkan subscriber baru masih dapat dilakukan dengan relatif mudah tergantung dari bagaimana sistem tersebut dirancang. Jika setiap instansi dari aplikasi utama beroperasi secara independen dan memiliki set subscriber sendiri, maka menambahkan subscriber baru ke setiap instansi dapat dilakukan dengan mudah. Setiap instansi dari aplikasi utama dapat mengelola set subscriber sendiri, dan penambahan subscriber baru ke setiap instansi mengikuti proses yang sama seperti menambahkannya ke instansi tunggal.
+
+Namun, jika beberapa instansi dari aplikasi utama perlu berbagi subscriber atau berkomunikasi satu sama lain, maka menambahkan subscriber baru mungkin memerlukan pertimbangan tambahan. Dalam skenario ini, mungkin perlu mengimplementasikan mekanisme untuk berkoordinasi antara instansi, seperti registri subscriber yang dibagikan atau sistem pesan terpusat. Meskipun hal ini mungkin menambah beberapa kompleksitas,Observer Pattern masih dapat memberikan solusi yang fleksibel dan skalabel untuk mengelola komunikasi antara beberapa instansi dari aplikasi utama dan subscriber mereka.
+
+3. Have you tried to make your own Tests, or enhance documentation on your Postman collection? If you have tried those features, tell us whether it is useful for your work (it can be your tutorial work or your Group Project)
+
+Membuat pengujian dan meningkatkan dokumentasi pada koleksi Postman adalah langkah penting dalam pengembangan API. Dengan menambahkan pengujian ke dalam koleksi dapat secara otomatis memverifikasi fungsionalitas API, menghemat waktu dan upaya yang diperlukan untuk pengujian berulang. Sementara itu, peningkatan dokumentasi dengan deskripsi yang jelas dan contoh penggunaan membantu mempercepat proses onboarding pengguna baru dan memfasilitasi kolaborasi tim dalam pengembangan API. Dengan demikian, langkah-langkah ini membantu meningkatkan kualitas dan keterbacaan API, serta memudahkan penggunaan dan adopsi yang sukses.
+
+
+
+
+
+
+
